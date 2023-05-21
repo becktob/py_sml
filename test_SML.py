@@ -25,3 +25,4 @@ class Test(TestCase):
 
         self.assertEquals(type, TYPE_OCT_STRING)
         self.assertEquals(length, len(schaten_line86))
+        self.assertEquals(2, len(tl))

@@ -1,6 +1,5 @@
 from typing import Iterator, List
 
-
 # https://www.schatenseite.de/2016/05/30/smart-message-language-stromzahler-auslesen/comment-page-1/
 data_schatenseite = b''\
 b'\x1B\x1B\x1B\x1B\x01\x01\x01\x01\x76\x05\x01\xD3\xD7\xBA\x62\x00\x62\x00\x72\x63\x01\x01\x76\x01\x01\x05'\
@@ -29,7 +28,6 @@ def parse_word(word: List[int]) -> str:
 
     length = tl & 0b0000_1111
 
-
     if type == TYPE_LIST:
         return f"List: {length=}"
 
@@ -46,23 +44,32 @@ def unpack_SML_binary(message: Iterator[int]):
         tl, type, length = read_type_length(message)
 
         if type == TYPE_LIST:
-            print(f"{tl:02x}: Enter List len={length=}")
+            print(f"{tl}: Enter List len={length=}")
             nested_iter = unpack_SML_binary(message)  # advances same iterator
             yield [next(nested_iter) for _ in range(length)]
             continue
 
-        current_word = [tl] + [next(message) for _ in range(length-1)]
+        current_word = tl + [next(message) for _ in range(length-1)]
         print(f"current_word: {hex_string(current_word)}")
         yield parse_word(current_word)
 
 
 def read_type_length(message):
-    tl = next(message)
-    multi_byte_length = tl & 0b1000_0000
-    if multi_byte_length:
-        raise NotImplementedError("TODO: handle multi-byte TLs")
-    type = (tl & 0b0111_0000) >> 4
-    length = tl & 0b0000_1111
+    this_byte = next(message)
+    type = (this_byte & 0b0111_0000) >> 4  # type is always in first byte
+    length = this_byte & 0b0000_1111
+    tl = [this_byte]
+
+    if this_byte & 0b1000_0000:
+        # cf TR03109, (131)
+        this_byte = next(message)
+        tl.append(this_byte)
+        length_bits_in_this_byte = this_byte & 0b0111_1111
+        length = (length << 4) + length_bits_in_this_byte  # TODO: shift by 7 for following bytes
+        if this_byte & 0b1000_0000:
+            raise NotImplementedError("TODO: handle multi-byte TLs > 2")
+
+
     return tl, type, length
 
 
