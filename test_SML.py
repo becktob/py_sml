@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from SML import read_type_length, TYPE_OCT_STRING, TYPE_LIST
+from SML import read_type_length, TYPE_OCT_STRING, TYPE_LIST, TYPE_ESCAPE
 
 
 class Test(TestCase):
@@ -25,4 +25,10 @@ class Test(TestCase):
 
         self.assertEquals(type, TYPE_OCT_STRING)
         self.assertEquals(length, len(schaten_line86))
-        self.assertEquals(2, len(tl))
+        self.assertEquals([0x83, 0x02], tl)
+
+    def test_read_type_length__handle_escape(self):
+        schaten_end = b'\x1b\x1b\x1b\x1b\x1a\x00\xf3\xc7'
+        tl, type, length = read_type_length(schaten_end.__iter__())
+
+        self.assertEquals(type, TYPE_ESCAPE)
