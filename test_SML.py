@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from SML import read_type_length, TYPE_OCT_STRING, TYPE_LIST, TYPE_ESCAPE
+from SML import read_type_length, TYPE_OCT_STRING, TYPE_LIST, TYPE_ESCAPE, parse_word
 
 
 class Test(TestCase):
@@ -17,8 +17,7 @@ class Test(TestCase):
 
         self.assertEquals(type, TYPE_LIST)
         self.assertEquals(length, 6)
-        
-        
+
     def test_read_type_length__multibyte_length(self):
         schaten_line86 = b'\x83\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01'
         tl, type, length = read_type_length(schaten_line86.__iter__())
@@ -32,3 +31,19 @@ class Test(TestCase):
         tl, type, length = read_type_length(schaten_end.__iter__())
 
         self.assertEquals(type, TYPE_ESCAPE)
+
+
+class TestParseWord(TestCase):
+    def test_parse_int8(self):
+        self.assertEquals(-17, parse_word([0x52, 256 - 17]))
+
+    def test_parse_int64(self):
+        word = [0x59, 0x01, 0, 0, 0, 0, 0, 0, 0x03]
+        self.assertEquals(2 ** 56 + 3, parse_word(word))
+
+    def test_parse_unsigned8(self):
+        self.assertEquals(234, parse_word([0x62, 234]))
+
+    def test_parse_unsigned64(self):
+        word = [0x69, 0x01, 0, 0, 0, 0, 0, 0, 0x07]
+        self.assertEquals(2 ** 56 + 7, parse_word(word))

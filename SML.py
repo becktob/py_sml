@@ -1,6 +1,6 @@
 import logging
 import warnings
-from typing import Iterator, List
+from typing import Iterator, List, Union
 
 # https://www.schatenseite.de/2016/05/30/smart-message-language-stromzahler-auslesen/comment-page-1/
 # TODO: "83 xx" in source is wrong, see line 86 further down the page, where it says "83 02"
@@ -29,7 +29,7 @@ TYPE_LIST = 0b0111
 
 TYPE_ESCAPE = 0b0001
 TYPE_PADDING = 0
-def parse_word(word: List[int]) -> str:
+def parse_word(word: List[int]) -> Union[str, int]:
     tl = word[0]
 
     if tl == 0:
@@ -45,9 +45,9 @@ def parse_word(word: List[int]) -> str:
     if type == TYPE_BOOL:
         return parse_bool()
     if type == TYPE_INT:
-        return parse_int()
+        return parse_int(word)
     if type == TYPE_UINT:
-        return parse_unsigned()
+        return parse_unsigned(word)
     if type == TYPE_LIST:
         return parse_list(length)
 
@@ -60,20 +60,26 @@ def parse_word(word: List[int]) -> str:
 
 
 def parse_octet_string(length, word):
-    return f"{hex_string(word)}: Oct_Str: {length=}, {len(word)}"
+    value_bytes = word[-length:]
+    return "".join([chr(b) for b in value_bytes])
 
 
 def parse_bool():
-    return "Bool"
+    raise NotImplementedError("Bool not implemented - haven't seen a bool in the wild")
 
 
-def parse_int():
-    return "Int"
+def parse_int(word):
+    # 6.2.2 (136)
+    value_bytes = bytes(word[1:])
+    value = int.from_bytes(value_bytes, byteorder='big', signed=True)
+    return value
 
 
-def parse_unsigned():
-    return "Unsigned"
-
+def parse_unsigned(word):
+    # 6.2.2 (136)
+    value_bytes = bytes(word[1:])
+    value = int.from_bytes(value_bytes, byteorder='big', signed=False)
+    return value
 
 def parse_list(length):
     return f"List: {length=}"
