@@ -26,7 +26,8 @@ def parse_word(word: List[int]) -> str:
     tl = word[0]
 
     if tl == 0:
-        return "End of SML Message."  # confusing: not the same as "End of transport message" 1b1b1b1b_1a??????
+        logging.info("End of SML message")
+        return "End of SML message."  # confusing: not the same as "End of transport message" 1b1b1b1b_1a??????
 
     type = (tl & 0b0111_0000) >> 4
 
@@ -44,6 +45,7 @@ def parse_word(word: List[int]) -> str:
     return f'{hex_string(word)}: foo'
 
 
+
 def unpack_SML_binary(message: Iterator[int]):
     # 6 SML binary encoding, direkt gepackte Kodierung (p41)
 
@@ -56,14 +58,15 @@ def unpack_SML_binary(message: Iterator[int]):
                 break
 
         if type == TYPE_LIST:
-            print(f"{tl}: Enter List len={length=}")
+            logging.info(f"{tl}: Enter list len={length=}")
             nested_iter = unpack_SML_binary(message)  # advances same iterator
-            yield [next(nested_iter) for _ in range(length)]
-            continue
-
-        current_word = tl + [next(message) for _ in range(length-1)]
-        print(f"current_word: {hex_string(current_word)}")
-        yield parse_word(current_word)
+            list_content = [next(nested_iter) for _ in range(length)]
+            logging.info(f"End of list len={length=}, {list_content=}")
+            yield list_content
+        else:
+            current_word = tl + [next(message) for _ in range(length-1)]
+            logging.debug(f"current_word: {hex_string(current_word)}")
+            yield parse_word(current_word)
 
 
 def read_type_length(message):
@@ -76,7 +79,7 @@ def read_type_length(message):
         rest_of_special_property = [next(message) for _ in range(3)]
         special_property = tl + rest_of_special_property
         if all(b==0x1b for b in special_property):
-            logging.warning("Escape sequence for special property detected")
+            logging.debug("Escape sequence for special property detected")
             special_content = [next(message) for _ in range(4)]
             return special_property, TYPE_ESCAPE, special_content  # TODO misusing "length" return value for content
         else:
@@ -105,7 +108,7 @@ def parse_SML(data: bytes):
     start = data.find(ESCAPE) + 4  # todo: handle ESCAPE_ESCAPE, which encodes ESCAPE (p68.155.1)
 
     escaped_property = data[start:start + 4]
-    print(f"{escaped_property=}")
+    logging.info(f"{escaped_property=}")
 
     if escaped_property == BEGINN_EINER_NACHRICHT:
         # length = data[start + 4:].find(ESCAPE + b'\1a')
@@ -124,9 +127,10 @@ def parse_SML(data: bytes):
 if __name__ == '__main__':
     #for data in (data0, data1, data2):
     #    print(parse_SML(data))
-
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     logging.info("Starting...")
 
     for word in parse_SML(data_schatenseite):
         print(word)
+        print("---")
+        logging.info("---")
