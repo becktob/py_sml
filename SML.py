@@ -43,14 +43,7 @@ def unpack_SML_binary(message: Iterator[int]):
     # 6 SML binary encoding, direkt gepackte Kodierung (p41)
 
     while True:
-        tl = next(message)
-
-        multi_byte_length = tl & 0b1000_0000
-        if multi_byte_length:
-            raise NotImplementedError("TODO: handle multi-byte TLs")
-
-        type = (tl & 0b0111_0000) >> 4
-        length = tl & 0b0000_1111
+        tl, type, length = read_type_length(message)
 
         if type == TYPE_LIST:
             print(f"{tl:02x}: Enter List len={length=}")
@@ -61,6 +54,16 @@ def unpack_SML_binary(message: Iterator[int]):
         current_word = [tl] + [next(message) for _ in range(length-1)]
         print(f"current_word: {hex_string(current_word)}")
         yield parse_word(current_word)
+
+
+def read_type_length(message):
+    tl = next(message)
+    multi_byte_length = tl & 0b1000_0000
+    if multi_byte_length:
+        raise NotImplementedError("TODO: handle multi-byte TLs")
+    type = (tl & 0b0111_0000) >> 4
+    length = tl & 0b0000_1111
+    return tl, type, length
 
 
 def hex_string(current_word):
