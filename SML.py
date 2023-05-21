@@ -11,9 +11,10 @@ TYPE_INT = 0b0101
 TYPE_UINT = 0b0110
 TYPE_LIST = 0b0111
 
-
 TYPE_ESCAPE = 0b0001
 TYPE_PADDING = 0
+
+
 def parse_word(word: List[int]) -> Union[str, int]:
     tl = word[0]
 
@@ -66,6 +67,7 @@ def parse_unsigned(word):
     value = int.from_bytes(value_bytes, byteorder='big', signed=False)
     return value
 
+
 def parse_list(length):
     return f"List: {length=}"
 
@@ -78,7 +80,8 @@ def unpack_SML_binary(message: Iterator[int]):
 
         if type == TYPE_ESCAPE:
             if length[0] == 0x1a:
-                logging.info("End of Message (transport level)")  # confusing: not the same as "End of SML message" (tl=0x00)
+                logging.info(
+                    "End of Message (transport level)")  # confusing: not the same as "End of SML message" (tl=0x00)
                 break
 
         if type == TYPE_LIST:
@@ -88,7 +91,7 @@ def unpack_SML_binary(message: Iterator[int]):
             logging.info(f"End of list len={length=}, {list_content=}")
             yield list_content
         else:
-            current_word = tl + [next(message) for _ in range(length-len(tl))]
+            current_word = tl + [next(message) for _ in range(length - len(tl))]
             logging.debug(f"current_word: {hex_string(current_word)}")
             yield parse_word(current_word)
 
@@ -102,7 +105,7 @@ def read_type_length(message):
     if type == TYPE_ESCAPE:  # TODO: move this outward, intercept at same level as "beginng of message"
         rest_of_special_property = [next(message) for _ in range(3)]
         special_property = tl + rest_of_special_property
-        if all(b==0x1b for b in special_property):
+        if all(b == 0x1b for b in special_property):
             logging.debug("Escape sequence for special property detected")
             special_content = [next(message) for _ in range(4)]
             return special_property, TYPE_ESCAPE, special_content  # TODO misusing "length" return value for content
@@ -149,7 +152,7 @@ def parse_SML(data: bytes):
 
 
 if __name__ == '__main__':
-    #for data in (data0, data1, data2):
+    # for data in (data0, data1, data2):
     #    print(parse_SML(data))
     logging.basicConfig(level=logging.INFO)
     logging.info("Starting...")
@@ -168,6 +171,7 @@ if __name__ == '__main__':
 
     print("my data:")
     import my_data  # not in repo, in case it contains private info?
+
     for word in parse_SML(my_data.data0):
         print(word)
         print("---")
