@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Iterator, List
 
 # https://www.schatenseite.de/2016/05/30/smart-message-language-stromzahler-auslesen/comment-page-1/
@@ -18,8 +19,14 @@ b'\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x
 b'\x07\x07\x07\x01\x01\x01\x63\xC6\x12\x00\x76\x05\x01\xD3\xD7\xBC\x62\x00\x62\x00\x72\x63\x02\x01\x71\x01'\
 b'\x63\xEE\x1A\x00\x1B\x1B\x1B\x1B\x1A\x00\xF3\xC7'
 
-TYPE_LIST = 0b0111
+# see (130), Tab.4:
 TYPE_OCT_STRING = 0b0000
+TYPE_BOOL = 0b0100
+TYPE_INT = 0b0101
+TYPE_UINT = 0b0110
+TYPE_LIST = 0b0111
+
+
 TYPE_ESCAPE = 0b0001
 TYPE_PADDING = 0
 def parse_word(word: List[int]) -> str:
@@ -30,20 +37,46 @@ def parse_word(word: List[int]) -> str:
         return "End of SML message."  # confusing: not the same as "End of transport message" 1b1b1b1b_1a??????
 
     type = (tl & 0b0111_0000) >> 4
-
     length = tl & 0b0000_1111
 
-    if type == TYPE_LIST:
-        return f"List: {length=}"
-
+    # see (130), Tab.4:
     if type == TYPE_OCT_STRING:
-        return f"{hex_string(word)}: Oct_Str: {length=}, {len(word)}"
+        return parse_octet_string(length, word)
+    if type == TYPE_BOOL:
+        return parse_bool()
+    if type == TYPE_INT:
+        return parse_int()
+    if type == TYPE_UINT:
+        return parse_unsigned()
+    if type == TYPE_LIST:
+        return parse_list(length)
 
     if type == TYPE_PADDING:
         raise NotImplementedError("This is probably a padding byte - not handled yet.")
 
-    return f'{hex_string(word)}: foo'
+    warnings.warn(f"Unexpected {type=}")
+    logging.error(f"Unexpected {type=}")
+    return f'{hex_string(word)}: UNKNOWN TYPE'
 
+
+def parse_octet_string(length, word):
+    return f"{hex_string(word)}: Oct_Str: {length=}, {len(word)}"
+
+
+def parse_bool():
+    return "Bool"
+
+
+def parse_int():
+    return "Int"
+
+
+def parse_unsigned():
+    return "Unsigned"
+
+
+def parse_list(length):
+    return f"List: {length=}"
 
 
 def unpack_SML_binary(message: Iterator[int]):
@@ -127,10 +160,17 @@ def parse_SML(data: bytes):
 if __name__ == '__main__':
     #for data in (data0, data1, data2):
     #    print(parse_SML(data))
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logging.info("Starting...")
 
     for word in parse_SML(data_schatenseite):
+        print(word)
+        print("---")
+        logging.info("---")
+
+    print("my data:")
+    import my_data  # not in repo, in case it contains private info?
+    for word in parse_SML(my_data.data0):
         print(word)
         print("---")
         logging.info("---")
