@@ -64,7 +64,7 @@ def unpack_SML_binary(message: Iterator[int]):
             logging.info(f"End of list len={length=}, {list_content=}")
             yield list_content
         else:
-            current_word = tl + [next(message) for _ in range(length-1)]
+            current_word = tl + [next(message) for _ in range(length-len(tl))]
             logging.debug(f"current_word: {hex_string(current_word)}")
             yield parse_word(current_word)
 
