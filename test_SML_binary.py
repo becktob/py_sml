@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from SML import read_type_length, TYPE_OCT_STRING, TYPE_LIST, TYPE_ESCAPE, parse_word
+from SML_binary import TYPE_OCT_STRING, TYPE_LIST, TYPE_ESCAPE, parse_word, read_type_length
 
 
 class Test(TestCase):
