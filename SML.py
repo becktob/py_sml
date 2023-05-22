@@ -72,8 +72,10 @@ def parse_list(length):
     return f"List: {length=}"
 
 
-def unpack_SML_binary(message: Iterator[int]):
-    # 6 SML binary encoding, direkt gepackte Kodierung (p41)
+def unpack_binary_SML_message(message: Iterator[int]):
+    """
+    Parse a single SML message from input that starts at the beginning of an SML message
+    """
 
     while True:
         tl, type, length = read_type_length(message)
@@ -86,7 +88,7 @@ def unpack_SML_binary(message: Iterator[int]):
 
         if type == TYPE_LIST:
             logging.info(f"{tl}: Enter list len={length=}")
-            nested_iter = unpack_SML_binary(message)  # advances same iterator
+            nested_iter = unpack_binary_SML_message(message)  # advances same iterator
             list_content = [next(nested_iter) for _ in range(length)]
             logging.info(f"End of list len={length=}, {list_content=}")
             yield list_content
@@ -128,7 +130,15 @@ def hex_string(current_word):
     return ' '.join(f'{b:02x}' for b in current_word)
 
 
-def parse_SML(data: bytes):
+def parse_binary_SML_message_from_stream(data: bytes):
+    """
+    Handles section 6 of TR-03109-Anlage-IV, parsing binary type-length-value format to tokens.
+    * "Octet String" -> python str
+    * "Boolean" -> TODO
+    * "Integer", "Unsigned" -> python int
+    * "List of..." -> python [ ]
+    """
+
     ESCAPE = b'\x1b' * 4
     BEGINN_EINER_NACHRICHT = b'\x01' * 4
 
@@ -142,13 +152,13 @@ def parse_SML(data: bytes):
 
         message = data[start + 4:]
 
-        words = unpack_SML_binary(bytearray(message).__iter__())
+        words = unpack_binary_SML_message(bytearray(message).__iter__())
 
         return words
 
     remaining_data = data[start + 4:]
     if remaining_data:
-        return parse_SML(remaining_data)
+        return parse_binary_SML_message_from_stream(remaining_data)
 
 
 if __name__ == '__main__':
@@ -158,21 +168,21 @@ if __name__ == '__main__':
     logging.info("Starting...")
 
     print("schatenseite:")
-    for word in parse_SML(data_schatenseite):
-        print(word)
+    for message in parse_binary_SML_message_from_stream(data_schatenseite):
+        print(message)
         print("---")
         logging.info("---")
 
     print("weigert:")
-    for word in parse_SML(data_weigert):
-        print(word)
+    for message in parse_binary_SML_message_from_stream(data_weigert):
+        print(message)
         print("---")
         logging.info("---")
 
     print("my data:")
     import my_data  # not in repo, in case it contains private info?
 
-    for word in parse_SML(my_data.data0):
-        print(word)
+    for message in parse_binary_SML_message_from_stream(my_data.data0):
+        print(message)
         print("---")
         logging.info("---")
