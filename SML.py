@@ -29,6 +29,9 @@ if __name__ == '__main__':
 
     for message_tokens in parse_binary_SML_message_from_stream(my_data.data0):
         print(message_tokens)
-        print(SmlMessage.parse_from_tokens(message_tokens).message_body)
+        message = SmlMessage.parse_from_tokens(message_tokens)
+        if message:
+            print(message.message_body)
+
         print("---")
         logging.info("---")
