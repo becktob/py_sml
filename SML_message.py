@@ -1,10 +1,11 @@
 import logging
+import warnings
 from typing import List
 
 
 class SmlMessage:
 
-    def __int__(self):
+    def __init__(self):
         self.transaction_id = None
         self.group_no: int = None
         self.abort_on_error: int = None
@@ -48,6 +49,14 @@ class SmlListEntry:
                   "72.7.0": "Instantaneous voltage (U) in phase L3 [V]",
                   "14.7.0": "Frequency [Hz]"}
 
+    def __repr__(self):
+        repr_name = self.display_name if self.display_name else f"OBIS {self.obj_name}"
+        repr = "<SmlListEntry: "
+        repr += f" {repr_name}"
+        repr += f" {float(self):.2f}"
+        repr += ">"
+        return repr
+
     def __init__(self):
         self.obj_name: str = None
         self.status = None  # type?
@@ -56,6 +65,13 @@ class SmlListEntry:
         self.scaler: int = None  # type?
         self.value = None  # type?
         self.value_sigature = None  # type?
+
+        self.display_name = None  # not in spec
+
+    def __float__(self):
+        if isinstance(self.value, int) and isinstance(self.scaler, int):
+            return self.value * 10.**self.scaler
+        return float("NaN")
 
     @classmethod
     def parse_from_tokens(cls, entry_tokens: List):
@@ -69,9 +85,10 @@ class SmlListEntry:
         entry.obj_name = [ord(c) for c in entry.obj_name]
         entry.obj_name = ".".join(map(str, entry.obj_name[3:6]))  # can't find this anywhere, but seems the way it is :/
         if entry.obj_name in cls.obis_codes.keys():
-            entry.obj_name = cls.obis_codes.get(entry.obj_name)
+            entry.display_name = cls.obis_codes.get(entry.obj_name)
+        else:
+            logging.warning(f"unknown obis code {entry.obj_name}")
 
-        print(entry.__dict__)
         return entry
 
 
