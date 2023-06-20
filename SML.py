@@ -12,7 +12,11 @@ def parse_mine():
         print(message_tokens)
         message = SmlMessage.parse_from_tokens(message_tokens)
         if message and message.message_body:
-            print(message.message_body.val_list)
+            for val in message.message_body.val_list:
+                if val.display_name and "power" in val.display_name:
+                    print(val)
+        else:
+            print("empty")
 
         print("---")
         logging.info("---")

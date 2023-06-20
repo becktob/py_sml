@@ -49,11 +49,24 @@ class SmlListEntry:
                   "72.7.0": "Instantaneous voltage (U) in phase L3 [V]",
                   "14.7.0": "Frequency [Hz]"}
 
+    # https://www.gurux.fi/node/6129
+    unit_codes = {27: "W_active",
+                  28: "W_apparent",
+                  29: "W_reactive",
+                  30: "Wh_active",
+                  31: "VA_apparent",
+                  33: "A",  # guess
+                  35: "V",  # guess
+                  44: "Hz",  # guess
+                  }
+
     def __repr__(self):
         repr_name = self.display_name if self.display_name else f"OBIS {self.obj_name}"
         repr = "<SmlListEntry: "
         repr += f" {repr_name}"
         repr += f" {float(self):.2f}"
+        if self.display_unit:
+            repr += f" {self.display_unit}"
         repr += ">"
         return repr
 
@@ -67,6 +80,7 @@ class SmlListEntry:
         self.value_sigature = None  # type?
 
         self.display_name = None  # not in spec
+        self.display_unit = None  # not in spec
 
     def __float__(self):
         if isinstance(self.value, int) and isinstance(self.scaler, int):
@@ -87,7 +101,10 @@ class SmlListEntry:
         if entry.obj_name in cls.obis_codes.keys():
             entry.display_name = cls.obis_codes.get(entry.obj_name)
         else:
-            logging.warning(f"unknown obis code {entry.obj_name}")
+            logging.info(f"unknown obis code {entry.obj_name}")
+
+        if entry.unit in cls.unit_codes.keys():
+            entry.display_unit = cls.unit_codes.get(entry.unit)
 
         return entry
 
