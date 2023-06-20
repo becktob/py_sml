@@ -25,7 +25,7 @@ def parse_word(word: List[int]) -> Union[str, int]:
     if type == TYPE_OCT_STRING:
         return parse_octet_string(length, word)
     if type == TYPE_BOOL:
-        return parse_bool()
+        return parse_bool(word)
     if type == TYPE_INT:
         return parse_int(word)
     if type == TYPE_UINT:
@@ -46,8 +46,9 @@ def parse_octet_string(length, word):
     return "".join([chr(b) for b in value_bytes])
 
 
-def parse_bool():
-    raise NotImplementedError("Bool not implemented - haven't seen a bool in the wild")
+def parse_bool(word):
+    logging.warning(f"Bool not implemented: {word}")
+    return word[0]
 
 
 def parse_int(word):
