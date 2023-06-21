@@ -1,5 +1,4 @@
 import logging
-import re
 import time
 
 import serial
@@ -7,15 +6,20 @@ import serial
 from SML_binary import parse_binary_SML_message_from_stream
 from SML_message import SmlMessage
 
+
 def raw_message_from_port(serial_port: serial.Serial):
+    end_of_message = b'\x1b\x1b\x1b\x1b\x1a'  # ...plus three arbitrary bytes
+
     buffer = bytearray()
     tic = time.time()
     while True:
-        buffer += serialPort.read(serial_port.inWaiting())
+        time.sleep(.01)
+        bytes_to_read = serial_port.inWaiting()
+        buffer += serialPort.read(bytes_to_read)
 
-        end = re.search(end_of_message, buffer)
-        if end:
-            last_byte=end.span()[1]
+        end_of_message_found = buffer.find(end_of_message)
+        if end_of_message_found >=0 and end_of_message_found + 3 < len(buffer):
+            last_byte = end_of_message_found + 8  # full end-of-message is len==8
             ret = buffer[:last_byte]
             buffer = buffer[last_byte:]
 
@@ -25,7 +29,7 @@ def raw_message_from_port(serial_port: serial.Serial):
             yield ret
 
 if __name__ == '__main__':
-    end_of_message = b'\x1b\x1b\x1b\x1b\x1a.{3}'
+    logging.basicConfig(level=logging.ERROR)
 
     port = '/dev/ttyAMA0'
     serialPort = serial.Serial(port, 9600,
@@ -46,6 +50,7 @@ if __name__ == '__main__':
                         for val in sml_message.message_body.val_list:
                             if val.display_name and "power" in val.display_name:
                                 print(val)
+                        print()
         except:
-            logging.exception("somethint went wrong.")
+            logging.exception("something went wrong.")
 
