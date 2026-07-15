@@ -5,26 +5,26 @@ from SML_message import SmlMessage
 from others_data import data_schatenseite, data_weigert
 
 def parse_mine():
-    print("my data:")
+    logging.info("my data:")
     import my_data  # not in repo, in case it contains private info?
 
-    for message_tokens in parse_binary_SML_message_from_stream(my_data.data0):
-        print(message_tokens)
+    for message_tokens in parse_binary_SML_message_from_stream(my_data.data_2026):
+        logging.info(message_tokens)
         message = SmlMessage.parse_from_tokens(message_tokens)
         if message and message.message_body:
+            logging.info(f"Got message with {len(message.message_body.val_list)} values")
             for val in message.message_body.val_list:
-                if val.display_name and "power" in val.display_name:
-                    print(val)
+                if val.obj_name == "16.7.0":
+                    logging.info(val)
         else:
-            print("empty")
+            logging.info("empty body")
 
-        print("---")
-        logging.info("---")
+        logging.info("-- message end --")
 
 if __name__ == '__main__':
     # for data in (data0, data1, data2):
     #    print(parse_SML(data))
-    # logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
     logging.info("Starting...")
 
     parse_mine()

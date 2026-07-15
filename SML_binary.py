@@ -15,7 +15,7 @@ def parse_word(word: List[int]) -> Union[str, int]:
     tl = word[0]
 
     if tl == 0:
-        logging.info("End of SML message")
+        logging.debug("End of SML message")
         return "End of SML message."  # confusing: not the same as "End of transport message" 1b1b1b1b_1a??????
 
     type = (tl & 0b0111_0000) >> 4
@@ -79,15 +79,15 @@ def unpack_binary_SML_message(message: Iterator[int]):
 
         if type == TYPE_ESCAPE:
             if length[0] == 0x1a:
-                logging.info(
+                logging.debug(
                     "End of Message (transport level)")  # confusing: not the same as "End of SML message" (tl=0x00)
                 break
 
         if type == TYPE_LIST:
-            logging.info(f"{tl}: Enter list len={length=}")
+            logging.debug(f"{tl}: Enter list len={length=}")
             nested_iter = unpack_binary_SML_message(message)  # advances same iterator
             list_content = [next(nested_iter) for _ in range(length)]
-            logging.info(f"End of list len={length=}, {list_content=}")
+            logging.debug(f"End of list len={length=}, {list_content=}")
             yield list_content
         else:
             current_word = tl + [next(message) for _ in range(length - len(tl))]
@@ -140,6 +140,8 @@ def parse_binary_SML_message_from_stream(data: bytes):
     BEGINN_EINER_NACHRICHT = b'\x01' * 4
 
     start = data.find(ESCAPE) + 4  # todo: handle ESCAPE_ESCAPE, which encodes ESCAPE (p68.155.1)
+    if start != 4:
+        logging.warning(f"skipped {start} bytes")
 
     escaped_property = data[start:start + 4]
     logging.info(f"{escaped_property=}")
