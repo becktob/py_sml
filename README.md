@@ -28,3 +28,8 @@ https://pinout.xyz/
 10: UART0 RX
 
 On a Pi Zero, need to enable serial port with `raspi-config` (not enabling shell on Serial, though)
+
+## Getting data
+```bash
+tail -f /dev/ttyS0 > rawtty.log
+```
