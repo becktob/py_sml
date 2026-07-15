@@ -5,6 +5,7 @@ import serial
 
 from SML_binary import parse_binary_SML_message_from_stream
 from SML_message import SmlMessage
+from prometheus_write import write_to_prometheus
 
 
 def raw_message_from_port(serial_port: serial.Serial):
@@ -31,7 +32,8 @@ def raw_message_from_port(serial_port: serial.Serial):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
 
-    port = '/dev/ttyAMA0'
+
+    port = '/dev/ttyS0'
     serialPort = serial.Serial(port, 9600,
                                bytesize=serial.EIGHTBITS, # 8-N-1
                                parity=serial.PARITY_NONE,
@@ -50,6 +52,8 @@ if __name__ == '__main__':
                         for val in sml_message.message_body.val_list:
                             if val.display_name and "power" in val.display_name:
                                 print(val)
+                            if val.obj_name == "16.7.0":
+                                write_to_prometheus.write("temp_power", val.value, {})
                         print()
         except:
             logging.exception("something went wrong.")
