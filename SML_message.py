@@ -37,7 +37,10 @@ class SmlListEntry:
     # BSI TR-03109-Anlage IV, 5.1.15 (OO)
 
     # https://www.promotic.eu/en/pmdoc/Subsystems/Comm/PmDrivers/IEC62056_OBIS.htm
-    obis_codes = {"16.7.0": "Sum active instantaneous power (A+ - A-) [kW]",
+    obis_codes = {"0.2.0": "Firmware version",
+                  "1.8.0": "Positive active energy (A+) total [kWh]",
+                  "2.8.0": "Negative active energy (A+) total [kWh]",
+                  "16.7.0": "Sum active instantaneous power (A+ - A-) [kW]",
                   "36.7.0": "Sum active instantaneous power (A+ - A-) in phase L1 [kW]",
                   "56.7.0": "Sum active instantaneous power (A+ - A-) in phase L2 [kW]",
                   "76.7.0": "Sum active instantaneous power (A+ - A-) in phase L3 [kW]",
@@ -47,7 +50,15 @@ class SmlListEntry:
                   "32.7.0": "Instantaneous voltage (U) in phase L1 [V]",
                   "52.7.0": "Instantaneous voltage (U) in phase L2 [V]",
                   "72.7.0": "Instantaneous voltage (U) in phase L3 [V]",
-                  "14.7.0": "Frequency [Hz]"}
+                  "14.7.0": "Frequency [Hz]",
+                  "81.7.1": "Phase angle U L2/L1",
+                  "81.7.2": "Phase angle U L3/L1",
+                  "81.7.4": "Phase angle I/U L1",
+                  "81.7.15": "Phase angle I/U L2",
+                  "81.7.26": "Phase angle I/U L3",
+                  "96.50.1": "Manufacturer Code",
+                  "96.1.0": "Device Number",
+                  "96.90.2": "CRC?"}
 
     # https://www.gurux.fi/node/6129
     unit_codes = {27: "W_active",
